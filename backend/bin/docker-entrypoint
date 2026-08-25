@@ -1,0 +1,22 @@
+#!/bin/bash -e
+
+if [ -f Gemfile ]; then
+  bundle check >/dev/null 2>&1 || bundle install
+fi
+
+# Wait for Postgres
+if [ -n "${DATABASE_URL:-}" ]; then
+  echo "Waiting for PostgreSQL..."
+  until pg_isready -d "${DATABASE_URL}" >/dev/null 2>&1; do
+    sleep 1
+  done
+  echo "PostgreSQL is ready."
+fi
+
+# Web server prepares DBs (Sidekiq waits for api via compose depends_on)
+if [ "${1}" = "./bin/rails" ] && [ "${2}" = "server" ]; then
+  ./bin/rails db:prepare
+  RAILS_ENV=test ./bin/rails db:prepare
+fi
+
+exec "$@"
