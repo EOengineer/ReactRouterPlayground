@@ -33,6 +33,14 @@ export default function App(): JSX.Element {
   return <Outlet />;
 }
 
+export function HydrateFallback(): JSX.Element {
+  return (
+    <main className="container py-5">
+      <p className="mb-0">Loading…</p>
+    </main>
+  );
+}
+
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps): JSX.Element {
   let message = "Oops!";
   let details = "An unexpected error occurred.";
