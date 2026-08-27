@@ -18,6 +18,14 @@ RSpec.describe "Registrations", type: :request do
       }
     end
 
+    it "defaults to the JSON format without an extension or Accept header" do
+      post "/registration", params: params
+
+      expect(response).to have_http_status(:created)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body).to include("email" => email, "admin" => false)
+    end
+
     it "creates a user, sets a session cookie, and returns the user" do
       expect {
         post "/registration", params: params, as: :json
@@ -25,6 +33,7 @@ RSpec.describe "Registrations", type: :request do
         .and change(Session, :count).by(1)
 
       expect(response).to have_http_status(:created)
+      expect(response.media_type).to eq("application/json")
       expect(response.cookies["session_id"]).to be_present
       expect(response.parsed_body).to include(
         "email" => email,
@@ -46,6 +55,7 @@ RSpec.describe "Registrations", type: :request do
       post "/registration", params: params.merge(email: "", password: "short"), as: :json
 
       expect(response).to have_http_status(:unprocessable_content)
+      expect(response.media_type).to eq("application/json")
       expect(response.parsed_body["errors"]).to be_present
     end
   end
