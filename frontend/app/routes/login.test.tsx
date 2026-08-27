@@ -42,6 +42,10 @@ describe("Login", () => {
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sign in" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Register" })).toHaveAttribute(
+      "href",
+      "/register",
+    );
   });
 
   it("shows the API error message when login fails", async () => {

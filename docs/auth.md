@@ -37,11 +37,15 @@ Matches `UserSerializer` and the frontend `User` type in `frontend/app/types/use
 
 ## SPA flow
 
-1. Unauthenticated visit to `/` runs a `clientLoader` that calls `GET /me`.
-2. On `401`, React Router redirects to `/login`.
-3. Login form posts `POST /session` with email/password.
-4. On `201`, the cookie is set and the app navigates to `/`.
-5. On `401`, the form shows the API `error` message.
+The **cookie** is the session. SPA loaders resolve the current user with `GET /me` (via `loadCurrentUser()`). Concurrent loader calls share one in-flight request; there is no sticky in-memory user cache.
+
+1. Root `clientLoader` calls `loadCurrentUser()` and exposes `{ user }` to the navbar. In SPA mode, root revalidates when navigation crosses the guest/auth boundary (`/login`, `/register` ↔ everything else).
+2. Authenticated routes sit under `authenticated-layout`, whose `clientLoader` redirects to `/login` when there is no user.
+3. Guest routes (`/login`, `/register`) sit under `guest-layout`, whose `clientLoader` redirects to `/` when a user is already signed in.
+4. Navbar link sets are mutually exclusive: guests see **Login** / **Register**; signed-in users see **Log out** only.
+5. Login (`POST /session`) / register (`POST /registration`) set the cookie, then navigate to `/` (one loader wave → `/me`).
+6. Logout calls `DELETE /session`, then navigates to `/login` (one loader wave → `/me`, expected `401` → guest UI).
+7. On failure, login shows the API `error` (`401`); register shows joined `errors` (`422`).
 
 Typed helpers live in `frontend/app/lib/api.ts`. Shared DTOs live in `frontend/app/types/`.
 

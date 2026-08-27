@@ -5,11 +5,38 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
+  type ShouldRevalidateFunctionArgs,
 } from "react-router";
 import type { JSX } from "react";
 
 import type { Route } from "./+types/root";
+import AppNavbar from "~/components/AppNavbar";
+import { loadCurrentUser } from "~/lib/api";
+import type { RootLoaderData } from "~/types/root";
 import "bootstrap/dist/css/bootstrap.min.css";
+
+export type { RootLoaderData };
+
+const guestPaths = new Set(["/login", "/register"]);
+
+function isGuestPath(pathname: string): boolean {
+  return guestPaths.has(pathname);
+}
+
+export async function clientLoader(): Promise<RootLoaderData> {
+  return { user: await loadCurrentUser() };
+}
+
+clientLoader.hydrate = true as const;
+
+/** SPA mode skips parent revalidation on GET nav; refresh user when crossing auth boundary. */
+export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
+}: ShouldRevalidateFunctionArgs): boolean {
+  return isGuestPath(currentUrl.pathname) !== isGuestPath(nextUrl.pathname);
+}
 
 export function Layout({ children }: { children: React.ReactNode }): JSX.Element {
   return (
@@ -30,7 +57,14 @@ export function Layout({ children }: { children: React.ReactNode }): JSX.Element
 }
 
 export default function App(): JSX.Element {
-  return <Outlet />;
+  const { user } = useLoaderData<typeof clientLoader>();
+
+  return (
+    <>
+      <AppNavbar user={user} />
+      <Outlet />
+    </>
+  );
 }
 
 export function HydrateFallback(): JSX.Element {

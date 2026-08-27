@@ -1,5 +1,5 @@
 import { useState, type JSX, type SyntheticEvent } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import {
   Alert,
   Button,
@@ -37,7 +37,7 @@ export default function Login(): JSX.Element {
 
     try {
       await login(credentials);
-      void navigate("/");
+      await navigate("/");
     } catch (err) {
       if (err instanceof AuthApiError) {
         setError(err.message);
@@ -97,6 +97,10 @@ export default function Login(): JSX.Element {
           {pending ? "Signing in…" : "Sign in"}
         </Button>
       </Form>
+
+      <p className="mt-3 mb-0 text-center">
+        Need an account? <Link to="/register">Register</Link>
+      </p>
     </Container>
   );
 }
