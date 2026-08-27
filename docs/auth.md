@@ -21,7 +21,7 @@ CORS allows the SPA origin (`CORS_ORIGINS`, default `http://localhost:5173`) wit
 
 ### User JSON
 
-Matches `UserSerializer` and the frontend `User` type in `frontend/app/types/user.ts`:
+Matches ActiveModel Serializers `UserSerializer` (`:attributes` adapter) and the frontend `User` type in `frontend/app/types/user.ts`. Encoding uses [Oj](https://github.com/ohler55/oj) via `Oj.optimize_rails`.
 
 ```json
 {

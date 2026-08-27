@@ -8,7 +8,7 @@ class SessionsController < ApplicationController
 
     if user
       start_new_session_for(user)
-      render json: UserSerializer.as_json(user), status: :created
+      render json: user, status: :created
     else
       render json: { error: "Invalid email or password" }, status: :unauthorized
     end
