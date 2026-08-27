@@ -55,3 +55,12 @@ Typed helpers live in `frontend/app/lib/api.ts`. Shared DTOs live in `frontend/a
 
 - **Email:** `eoengineer@gmail.com`
 - **Password:** `password1234!`
+
+## Tech debt
+
+Still need the rest of the usual Rails authentication flows beyond register / login / logout / me, including:
+
+- Password reset (request + token confirmation)
+- Change / update password (signed-in)
+- Mailers for reset (and any confirmation) emails
+- Related frontend routes and API helpers for those flows
