@@ -8,6 +8,10 @@ Rails.application.routes.draw do
     resource :registration, only: [ :create ]
     resource :session, only: [ :create, :destroy ]
     resource :me, only: [ :show ], controller: "me"
+
+    namespace :admin do
+      resources :users, only: [ :index ]
+    end
   end
 
   # Sidekiq dashboard (dev only; API-only apps need session middleware for auth in prod)

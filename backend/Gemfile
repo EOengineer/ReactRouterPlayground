@@ -19,6 +19,9 @@ gem "rack-cors"
 gem "active_model_serializers", "~> 0.10.0"
 gem "oj"
 
+# Authorization
+gem "pundit"
+
 # Redis cache + Sidekiq
 gem "redis", ">= 5.0"
 gem "sidekiq", "~> 7.3"
