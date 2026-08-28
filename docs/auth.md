@@ -18,6 +18,7 @@ CORS allows the SPA origin (`CORS_ORIGINS`, default `http://localhost:5173`) wit
 | `POST` | `/session` | no | `201` + user JSON + set cookie | `401` `{ error: string }` |
 | `DELETE` | `/session` | yes | `204` + clear cookie | `401` `{ error: "Unauthorized" }` |
 | `GET` | `/me` | yes | `200` + user JSON | `401` `{ error: "Unauthorized" }` |
+| `GET` | `/admin/users` | yes (admin) | `200` + user JSON array | `401` / `403` `{ error: "Unauthorized" \| "Forbidden" }` |
 
 ### User JSON
 
@@ -34,6 +35,15 @@ Matches ActiveModel Serializers `UserSerializer` (`:attributes` adapter) and the
 ```
 
 `admin` cannot be set via registration params.
+
+## Authorization
+
+Admin endpoints live under `/admin` and use [Pundit](https://github.com/varvet/pundit). Every admin request must pass **two checks**:
+
+1. **Session auth** — same cookie/session as `/me` (`ApplicationController` returns `401` when unsigned in)
+2. **Admin role** — `Admin::UserPolicy` requires `user.admin?` (`403` for signed-in non-admins). `Admin::BaseController` namespaces Pundit calls to `Admin::*Policy` automatically.
+
+Admin controllers cannot skip authentication.
 
 ## SPA flow
 
