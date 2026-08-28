@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CurrentUserProvider } from "~/contexts/current-user";
 import { AuthApiError } from "~/types/auth";
 import type { User } from "~/types/user";
 
@@ -12,16 +13,25 @@ const email = "eoengineer@gmail.com";
 const password = "password1234!";
 const invalidCredentialsMessage = "Invalid email or password";
 
+const loadCurrentUserMock = vi.fn<() => Promise<User | null>>();
 const loginMock = vi.fn<(credentials: { email: string; password: string }) => Promise<User>>();
 
 vi.mock("~/lib/api", () => ({
+  loadCurrentUser: () => loadCurrentUserMock(),
   login: (credentials: { email: string; password: string }) => loginMock(credentials),
 }));
 
 function renderLogin(): ReturnType<typeof createMemoryRouter> {
   const router = createMemoryRouter(
     [
-      { path: "/login", Component: Login },
+      {
+        path: "/login",
+        element: (
+          <CurrentUserProvider>
+            <Login />
+          </CurrentUserProvider>
+        ),
+      },
       { path: "/", element: <div>Home</div> },
     ],
     { initialEntries: ["/login"] },
@@ -33,10 +43,12 @@ function renderLogin(): ReturnType<typeof createMemoryRouter> {
 
 describe("Login", () => {
   beforeEach(() => {
+    loadCurrentUserMock.mockReset();
+    loadCurrentUserMock.mockResolvedValue(null);
     loginMock.mockReset();
   });
 
-  it("renders email, password, and submit controls", () => {
+  it("renders email, password, and submit controls", async () => {
     renderLogin();
 
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
@@ -46,6 +58,9 @@ describe("Login", () => {
       "href",
       "/register",
     );
+    await waitFor(() => {
+      expect(loadCurrentUserMock).toHaveBeenCalled();
+    });
   });
 
   it("shows the API error message when login fails", async () => {
@@ -53,6 +68,9 @@ describe("Login", () => {
     loginMock.mockRejectedValue(new AuthApiError(401, { error: invalidCredentialsMessage }));
 
     renderLogin();
+    await waitFor(() => {
+      expect(loadCurrentUserMock).toHaveBeenCalled();
+    });
 
     await user.type(screen.getByLabelText("Email"), email);
     await user.type(screen.getByLabelText("Password"), password);
@@ -76,6 +94,9 @@ describe("Login", () => {
     loginMock.mockResolvedValue(signedInUser);
 
     const router = renderLogin();
+    await waitFor(() => {
+      expect(loadCurrentUserMock).toHaveBeenCalled();
+    });
 
     await user.type(screen.getByLabelText("Email"), email);
     await user.type(screen.getByLabelText("Password"), password);
