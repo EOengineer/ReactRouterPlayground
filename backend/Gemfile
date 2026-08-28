@@ -9,8 +9,15 @@ gem "bootsnap", require: false
 # Active Storage variants
 gem "image_processing", "~> 1.2"
 
+# Password hashing for has_secure_password
+gem "bcrypt", "~> 3.1.7"
+
 # CORS for React SPA
 gem "rack-cors"
+
+# JSON serialization for API responses
+gem "active_model_serializers", "~> 0.10.0"
+gem "oj"
 
 # Redis cache + Sidekiq
 gem "redis", ">= 5.0"

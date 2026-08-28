@@ -17,7 +17,7 @@ Browser ──► frontend (:5173) ──HTTP──► api (:3000)
 
 | Service    | Host URL                         | Role |
 |------------|----------------------------------|------|
-| Frontend   | http://localhost:5173/home       | React Router 8 SPA (Vite HMR) |
+| Frontend   | http://localhost:5173/           | React Router 8 SPA (Vite HMR) |
 | Rails API  | http://localhost:3000/up         | JSON API + health check |
 | Sidekiq UI | http://localhost:3000/sidekiq    | Job dashboard (development only) |
 | Postgres   | localhost:5432                   | Primary datastore |
@@ -46,6 +46,10 @@ docker compose up --build
 ```
 
 (`dc` is an alias for `docker compose` if configured.)
+
+## Auth
+
+Cookie sessions between the SPA and Rails API (`POST /session`, `GET /me`, etc.). See **[docs/auth.md](docs/auth.md)** for endpoints, the SPA login flow, and seed credentials.
 
 ## Backend (Rails)
 
