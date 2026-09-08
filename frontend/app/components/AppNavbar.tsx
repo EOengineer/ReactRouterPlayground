@@ -15,7 +15,7 @@ import { useCurrentUser } from "~/contexts/current-user";
 
 export default function AppNavbar(): JSX.Element {
   const navigate = useNavigate();
-  const { user, status, logout } = useCurrentUser();
+  const { user, status, logout, isAdmin } = useCurrentUser();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -29,6 +29,7 @@ export default function AppNavbar(): JSX.Element {
       setIsOpen(false);
     }
   }
+
 
   function renderAuthLinks(): JSX.Element | null {
     if (status === "loading") {
@@ -69,6 +70,13 @@ export default function AppNavbar(): JSX.Element {
     );
   }
 
+  function renderAdminLinks(): JSX.Element | null {
+    if (isAdmin) {
+      return <NavItem><NavLink tag={Link} to="/admin">Admin</NavLink></NavItem>;
+    } 
+    return null;
+  }
+
   return (
     <Navbar color="light" light expand="md" container className="border-bottom">
       <NavbarBrand tag={Link} to="/">
@@ -83,6 +91,7 @@ export default function AppNavbar(): JSX.Element {
       <Collapse isOpen={isOpen} navbar>
         <Nav className="ms-auto" navbar>
           {renderAuthLinks()}
+          {renderAdminLinks()}
         </Nav>
       </Collapse>
     </Navbar>

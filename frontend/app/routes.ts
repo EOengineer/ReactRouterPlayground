@@ -6,4 +6,7 @@ export default [
     route("login", "routes/login.tsx"),
     route("register", "routes/register.tsx"),
   ]),
+  layout("routes/admin-layout.tsx", [
+    route("admin", "routes/admin.tsx"),
+  ]),
 ] satisfies RouteConfig;
