@@ -1,30 +1,53 @@
-import type { JSX } from 'react';
-import { Outlet, redirect } from 'react-router';
+import type { JSX } from "react";
+import { Link, Outlet, redirect } from "react-router";
+import { Container, Nav, NavItem, NavLink } from "reactstrap";
 
-import { loadCurrentUser } from '~/lib/api';
-import type { User } from '~/types/user';
+import { loadCurrentUser } from "~/lib/api";
+import type { User } from "~/types/user";
 
 export type AdminLoaderData = {
-    user: User;
-}
+  user: User;
+};
 
-export async function adminLoader(): Promise<AdminLoaderData | Response> {
+export async function clientLoader(): Promise<AdminLoaderData | Response> {
   const user = await loadCurrentUser();
 
   if (!user) {
-    return redirect('/login');
+    return redirect("/login");
   }
 
-  if (!!!user.admin) {
-    return redirect('/');
+  if (!user.admin) {
+    return redirect("/");
   }
 
   return { user };
 }
 
-
-adminLoader.hydrate = true as const;
+clientLoader.hydrate = true as const;
 
 export default function AdminLayout(): JSX.Element {
-  return <Outlet />;
+  return (
+    <>
+      <Container className="pt-3">
+        <Nav pills>
+          <NavItem>
+            <NavLink tag={Link} to="/admin">
+              Admin
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink tag={Link} to="/admin/users">
+              Users
+            </NavLink>
+          </NavItem>
+          <NavItem>
+            <NavLink tag={Link} to="/admin/sessions">
+              Sessions
+            </NavLink>
+          </NavItem>
+        </Nav>
+      </Container>
+      <Outlet />
+    </>
+  );
 }
