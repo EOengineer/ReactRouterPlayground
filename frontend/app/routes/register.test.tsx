@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CurrentUserProvider } from "~/contexts/current-user";
 import { AuthApiError } from "~/types/auth";
 import type { RegistrationPayload } from "~/types/auth";
 import type { User } from "~/types/user";
@@ -16,10 +17,12 @@ const password = "password1234!";
 const validationErrors = ["Email has already been taken", "Password is too short"];
 const joinedValidationErrors = validationErrors.join(", ");
 
+const loadCurrentUserMock = vi.fn<() => Promise<User | null>>();
 const registerMock =
   vi.fn<(payload: RegistrationPayload) => Promise<User>>();
 
 vi.mock("~/lib/api", () => ({
+  loadCurrentUser: () => loadCurrentUserMock(),
   register: (payload: RegistrationPayload) => registerMock(payload),
 }));
 
@@ -44,7 +47,14 @@ async function fillRegistrationForm(
 function renderRegister(): ReturnType<typeof createMemoryRouter> {
   const router = createMemoryRouter(
     [
-      { path: "/register", Component: Register },
+      {
+        path: "/register",
+        element: (
+          <CurrentUserProvider>
+            <Register />
+          </CurrentUserProvider>
+        ),
+      },
       { path: "/login", element: <div>Login</div> },
       { path: "/", element: <div>Home</div> },
     ],
@@ -57,10 +67,12 @@ function renderRegister(): ReturnType<typeof createMemoryRouter> {
 
 describe("Register", () => {
   beforeEach(() => {
+    loadCurrentUserMock.mockReset();
+    loadCurrentUserMock.mockResolvedValue(null);
     registerMock.mockReset();
   });
 
-  it("renders registration fields and submit control", () => {
+  it("renders registration fields and submit control", async () => {
     renderRegister();
 
     expect(screen.getByLabelText("First name")).toBeInTheDocument();
@@ -70,6 +82,9 @@ describe("Register", () => {
     expect(screen.getByLabelText("Confirm password")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Create account" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute("href", "/login");
+    await waitFor(() => {
+      expect(loadCurrentUserMock).toHaveBeenCalled();
+    });
   });
 
   it("shows API validation errors when registration fails", async () => {
@@ -79,6 +94,9 @@ describe("Register", () => {
     );
 
     renderRegister();
+    await waitFor(() => {
+      expect(loadCurrentUserMock).toHaveBeenCalled();
+    });
 
     await fillRegistrationForm(user);
     await user.click(screen.getByRole("button", { name: "Create account" }));
@@ -101,6 +119,9 @@ describe("Register", () => {
     registerMock.mockResolvedValue(createdUser);
 
     const router = renderRegister();
+    await waitFor(() => {
+      expect(loadCurrentUserMock).toHaveBeenCalled();
+    });
 
     await fillRegistrationForm(user);
     await user.click(screen.getByRole("button", { name: "Create account" }));

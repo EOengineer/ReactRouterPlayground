@@ -10,7 +10,7 @@ import {
   Label,
 } from "reactstrap";
 
-import { register } from "~/lib/api";
+import { useCurrentUser } from "~/contexts/current-user";
 import { AuthApiError } from "~/types/auth";
 import type { RegistrationPayload } from "~/types/auth";
 
@@ -23,6 +23,7 @@ export function meta(): Array<{ title?: string; name?: string; content?: string 
 
 export default function Register(): JSX.Element {
   const navigate = useNavigate();
+  const { register } = useCurrentUser();
   const [payload, setPayload] = useState<RegistrationPayload>({
     email: "",
     password: "",

@@ -11,15 +11,11 @@ import {
   NavLink,
 } from "reactstrap";
 
-import { logout } from "~/lib/api";
-import type { User } from "~/types/user";
+import { useCurrentUser } from "~/contexts/current-user";
 
-export type AppNavbarProps = {
-  user: User | null;
-};
-
-export default function AppNavbar({ user }: AppNavbarProps): JSX.Element {
+export default function AppNavbar(): JSX.Element {
   const navigate = useNavigate();
+  const { user, status, logout } = useCurrentUser();
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
 
@@ -32,6 +28,45 @@ export default function AppNavbar({ user }: AppNavbarProps): JSX.Element {
       setPending(false);
       setIsOpen(false);
     }
+  }
+
+  function renderAuthLinks(): JSX.Element | null {
+    if (status === "loading") {
+      return null;
+    }
+
+    if (user) {
+      return (
+        <NavItem>
+          <Button
+            color="link"
+            className="nav-link"
+            type="button"
+            disabled={pending}
+            onClick={() => {
+              void handleLogout();
+            }}
+          >
+            {pending ? "Logging out…" : "Log out"}
+          </Button>
+        </NavItem>
+      );
+    }
+
+    return (
+      <>
+        <NavItem>
+          <NavLink tag={Link} to="/login">
+            Login
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink tag={Link} to="/register">
+            Register
+          </NavLink>
+        </NavItem>
+      </>
+    );
   }
 
   return (
@@ -47,34 +82,7 @@ export default function AppNavbar({ user }: AppNavbarProps): JSX.Element {
       />
       <Collapse isOpen={isOpen} navbar>
         <Nav className="ms-auto" navbar>
-          {user ? (
-            <NavItem>
-              <Button
-                color="link"
-                className="nav-link"
-                type="button"
-                disabled={pending}
-                onClick={() => {
-                  void handleLogout();
-                }}
-              >
-                {pending ? "Logging out…" : "Log out"}
-              </Button>
-            </NavItem>
-          ) : (
-            <>
-              <NavItem>
-                <NavLink tag={Link} to="/login">
-                  Login
-                </NavLink>
-              </NavItem>
-              <NavItem>
-                <NavLink tag={Link} to="/register">
-                  Register
-                </NavLink>
-              </NavItem>
-            </>
-          )}
+          {renderAuthLinks()}
         </Nav>
       </Collapse>
     </Navbar>

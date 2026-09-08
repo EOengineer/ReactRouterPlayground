@@ -10,7 +10,7 @@ import {
   Label,
 } from "reactstrap";
 
-import { login } from "~/lib/api";
+import { useCurrentUser } from "~/contexts/current-user";
 import { AuthApiError } from "~/types/auth";
 import type { LoginCredentials } from "~/types/auth";
 
@@ -23,6 +23,7 @@ export function meta(): Array<{ title?: string; name?: string; content?: string 
 
 export default function Login(): JSX.Element {
   const navigate = useNavigate();
+  const { login } = useCurrentUser();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: "",
     password: "",

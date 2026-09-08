@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CurrentUserProvider } from "~/contexts/current-user";
 import type { User } from "~/types/user";
 
 import AppNavbar from "./AppNavbar";
@@ -15,18 +16,24 @@ const currentUser: User = {
   admin: true,
 };
 
+const loadCurrentUserMock = vi.fn<() => Promise<User | null>>();
 const logoutMock = vi.fn<() => Promise<void>>();
 
 vi.mock("~/lib/api", () => ({
+  loadCurrentUser: () => loadCurrentUserMock(),
   logout: () => logoutMock(),
 }));
 
-function renderNavbar(user: User | null): ReturnType<typeof createMemoryRouter> {
+function renderNavbar(): ReturnType<typeof createMemoryRouter> {
   const router = createMemoryRouter(
     [
       {
         path: "/",
-        element: <AppNavbar user={user} />,
+        element: (
+          <CurrentUserProvider>
+            <AppNavbar />
+          </CurrentUserProvider>
+        ),
       },
       {
         path: "/login",
@@ -46,14 +53,19 @@ function renderNavbar(user: User | null): ReturnType<typeof createMemoryRouter> 
 
 describe("AppNavbar", () => {
   beforeEach(() => {
+    loadCurrentUserMock.mockReset();
     logoutMock.mockReset();
     logoutMock.mockResolvedValue(undefined);
   });
 
-  it("shows only Login and Register links for guests", () => {
-    renderNavbar(null);
+  it("shows only Login and Register links for guests", async () => {
+    loadCurrentUserMock.mockResolvedValue(null);
+    renderNavbar();
 
-    expect(screen.getByRole("link", { name: "Login" })).toHaveAttribute("href", "/login");
+    expect(await screen.findByRole("link", { name: "Login" })).toHaveAttribute(
+      "href",
+      "/login",
+    );
     expect(screen.getByRole("link", { name: "Register" })).toHaveAttribute(
       "href",
       "/register",
@@ -62,18 +74,21 @@ describe("AppNavbar", () => {
     expect(screen.getByRole("button", { name: "Toggle navigation" })).toBeInTheDocument();
   });
 
-  it("shows only Log out for authenticated users", () => {
-    renderNavbar(currentUser);
+  it("shows only Log out for authenticated users", async () => {
+    loadCurrentUserMock.mockResolvedValue(currentUser);
+    renderNavbar();
 
-    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Log out" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Register" })).not.toBeInTheDocument();
   });
 
   it("logs out and navigates to /login", async () => {
+    loadCurrentUserMock.mockResolvedValue(currentUser);
     const user = userEvent.setup();
-    const router = renderNavbar(currentUser);
+    const router = renderNavbar();
 
+    await screen.findByRole("button", { name: "Log out" });
     await user.click(screen.getByRole("button", { name: "Log out" }));
 
     await waitFor(() => {
