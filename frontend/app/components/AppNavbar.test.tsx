@@ -16,6 +16,13 @@ const currentUser: User = {
   admin: true,
 };
 
+const memberUser: User = {
+  ...currentUser,
+  id: 2,
+  email: "member@example.com",
+  admin: false,
+};
+
 const loadCurrentUserMock = vi.fn<() => Promise<User | null>>();
 const logoutMock = vi.fn<() => Promise<void>>();
 
@@ -42,6 +49,10 @@ function renderNavbar(): ReturnType<typeof createMemoryRouter> {
       {
         path: "/register",
         element: <div>Register page</div>,
+      },
+      {
+        path: "/admin",
+        element: <div>Admin page</div>,
       },
     ],
     { initialEntries: ["/"] },
@@ -71,14 +82,29 @@ describe("AppNavbar", () => {
       "/register",
     );
     expect(screen.queryByRole("button", { name: "Log out" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Admin" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Toggle navigation" })).toBeInTheDocument();
   });
 
-  it("shows only Log out for authenticated users", async () => {
-    loadCurrentUserMock.mockResolvedValue(currentUser);
+  it("shows Log out for authenticated members without Admin", async () => {
+    loadCurrentUserMock.mockResolvedValue(memberUser);
     renderNavbar();
 
     expect(await screen.findByRole("button", { name: "Log out" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Register" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Admin" })).not.toBeInTheDocument();
+  });
+
+  it("shows Admin and Log out for authenticated admins", async () => {
+    loadCurrentUserMock.mockResolvedValue(currentUser);
+    renderNavbar();
+
+    expect(await screen.findByRole("link", { name: "Admin" })).toHaveAttribute(
+      "href",
+      "/admin",
+    );
+    expect(screen.getByRole("button", { name: "Log out" })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Login" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Register" })).not.toBeInTheDocument();
   });
