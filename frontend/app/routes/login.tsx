@@ -11,7 +11,7 @@ import {
 } from "reactstrap";
 
 import { useCurrentUser } from "~/contexts/current-user";
-import { AuthApiError } from "~/types/auth";
+import { ApiError } from "~/types/api";
 import type { LoginCredentials } from "~/types/auth";
 
 export function meta(): Array<{ title?: string; name?: string; content?: string }> {
@@ -40,7 +40,7 @@ export default function Login(): JSX.Element {
       await login(credentials);
       await navigate("/");
     } catch (err) {
-      if (err instanceof AuthApiError) {
+      if (err instanceof ApiError) {
         setError(err.message);
       } else {
         setError("Something went wrong. Please try again.");

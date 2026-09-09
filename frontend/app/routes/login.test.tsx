@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CurrentUserProvider } from "~/contexts/current-user";
-import { AuthApiError } from "~/types/auth";
+import { ApiError } from "~/types/api";
 import type { User } from "~/types/user";
 
 import Login from "./login";
@@ -65,7 +65,7 @@ describe("Login", () => {
 
   it("shows the API error message when login fails", async () => {
     const user = userEvent.setup();
-    loginMock.mockRejectedValue(new AuthApiError(401, { error: invalidCredentialsMessage }));
+    loginMock.mockRejectedValue(new ApiError(401, { error: invalidCredentialsMessage }));
 
     renderLogin();
     await waitFor(() => {
