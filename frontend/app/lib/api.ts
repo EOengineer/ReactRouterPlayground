@@ -1,28 +1,7 @@
-import type {
-  AuthErrorResponse,
-  LoginCredentials,
-  RegistrationPayload,
-} from "~/types/auth";
-import { AuthApiError } from "~/types/auth";
+import { apiUrl, parseApiError } from "~/lib/http";
+import type { LoginCredentials, RegistrationPayload } from "~/types/auth";
+import { ApiError } from "~/types/api";
 import type { User } from "~/types/user";
-
-function apiBaseUrl(): string {
-  const raw: unknown = import.meta.env.VITE_API_URL;
-  return typeof raw === "string" ? raw.replace(/\/$/, "") : "";
-}
-
-function apiUrl(path: string): string {
-  return `${apiBaseUrl()}${path}`;
-}
-
-async function parseAuthError(response: Response): Promise<AuthApiError> {
-  try {
-    const body = (await response.json()) as AuthErrorResponse;
-    return new AuthApiError(response.status, body);
-  } catch {
-    return new AuthApiError(response.status, null);
-  }
-}
 
 /** Dedupes concurrent /me calls from nested clientLoaders; not a session store. */
 let inflightCurrentUser: Promise<User | null> | null = null;
@@ -36,7 +15,7 @@ export async function loadCurrentUser(): Promise<User | null> {
     try {
       return await fetchCurrentUser();
     } catch (error) {
-      if (error instanceof AuthApiError && error.status === 401) {
+      if (error instanceof ApiError && error.status === 401) {
         return null;
       }
       throw error;
@@ -57,7 +36,7 @@ export async function login(credentials: LoginCredentials): Promise<User> {
   });
 
   if (!response.ok) {
-    throw await parseAuthError(response);
+    throw await parseApiError(response);
   }
 
   return (await response.json()) as User;
@@ -72,7 +51,7 @@ export async function register(payload: RegistrationPayload): Promise<User> {
   });
 
   if (!response.ok) {
-    throw await parseAuthError(response);
+    throw await parseApiError(response);
   }
 
   return (await response.json()) as User;
@@ -86,7 +65,7 @@ export async function fetchCurrentUser(): Promise<User> {
   });
 
   if (!response.ok) {
-    throw await parseAuthError(response);
+    throw await parseApiError(response);
   }
 
   return (await response.json()) as User;
@@ -100,6 +79,6 @@ export async function logout(): Promise<void> {
   });
 
   if (!response.ok) {
-    throw await parseAuthError(response);
+    throw await parseApiError(response);
   }
 }

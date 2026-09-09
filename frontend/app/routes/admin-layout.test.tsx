@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthApiError } from "~/types/auth";
+import { ApiError } from "~/types/api";
 import type { User } from "~/types/user";
 
 import AdminLayout, { clientLoader } from "./admin-layout";
@@ -74,10 +74,10 @@ describe("AdminLayout clientLoader", () => {
   });
 
   it("propagates unexpected load errors", async () => {
-    loadCurrentUserMock.mockRejectedValue(new AuthApiError(500, { error: "Boom" }));
+    loadCurrentUserMock.mockRejectedValue(new ApiError(500, { error: "Boom" }));
 
     await expect(clientLoader()).rejects.toMatchObject({
-      name: "AuthApiError",
+      name: "ApiError",
       status: 500,
     });
   });

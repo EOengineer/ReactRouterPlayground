@@ -73,7 +73,7 @@ describe("loadCurrentUser", () => {
     fetchMock.mockResolvedValue(jsonResponse({ error: "Boom" }, 500));
 
     await expect(loadCurrentUser()).rejects.toMatchObject({
-      name: "AuthApiError",
+      name: "ApiError",
       status: 500,
       message: "Boom",
     });

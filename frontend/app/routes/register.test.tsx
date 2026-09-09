@@ -4,7 +4,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CurrentUserProvider } from "~/contexts/current-user";
-import { AuthApiError } from "~/types/auth";
+import { ApiError } from "~/types/api";
 import type { RegistrationPayload } from "~/types/auth";
 import type { User } from "~/types/user";
 
@@ -90,7 +90,7 @@ describe("Register", () => {
   it("shows API validation errors when registration fails", async () => {
     const user = userEvent.setup();
     registerMock.mockRejectedValue(
-      new AuthApiError(422, { errors: validationErrors }),
+      new ApiError(422, { errors: validationErrors }),
     );
 
     renderRegister();
