@@ -10,6 +10,12 @@ export function apiUrl(path: string): string {
   return `${apiBaseUrl()}${path}`;
 }
 
+export function defaultHeaders(): HeadersInit {
+  return {
+    Accept: "application/json",
+  };
+}
+
 export async function parseApiError(response: Response): Promise<ApiError> {
   try {
     const body = (await response.json()) as ApiErrorResponse;
