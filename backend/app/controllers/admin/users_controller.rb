@@ -7,5 +7,11 @@ module Admin
 
       render json: policy_scope(User)
     end
+
+    def show
+      authorize User
+
+      render json: User.find(params[:id])
+    end
   end
 end

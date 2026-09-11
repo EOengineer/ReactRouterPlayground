@@ -23,6 +23,25 @@ RSpec.describe Admin::UserPolicy do
     end
   end
 
+  describe "#show?" do
+    it "allows admins" do
+      admin = build(:user, :admin)
+      target = build(:user)
+      expect(described_class.new(admin, target).show?).to be(true)
+    end
+
+    it "denies non-admins" do
+      regular_user = build(:user)
+      target = build(:user)
+      expect(described_class.new(regular_user, target).show?).to be(false)
+    end
+
+    it "denies nil user" do
+      target = build(:user)
+      expect(described_class.new(nil, target).show?).to be(false)
+    end
+  end
+
   describe Admin::UserPolicy::Scope do
     subject(:scope) { described_class.new(user, User.all).resolve }
 
