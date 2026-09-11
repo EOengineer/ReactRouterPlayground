@@ -5,6 +5,7 @@ module Admin
   # and admin authorization via Pundit (→ 403 for non-admins).
   class BaseController < ApplicationController
     rescue_from Pundit::NotAuthorizedError, with: :render_forbidden
+    rescue_from ActiveRecord::RecordNotFound, with: :render_not_found
 
     after_action :verify_authorized
     after_action :verify_policy_scoped, only: :index
@@ -31,6 +32,10 @@ module Admin
 
     def render_forbidden
       render json: { error: "Forbidden" }, status: :forbidden
+    end
+
+    def render_not_found
+      render json: { error: "Not Found" }, status: :not_found
     end
   end
 end

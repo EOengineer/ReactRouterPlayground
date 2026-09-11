@@ -52,6 +52,59 @@ RSpec.describe "Admin users", type: :request do
     end
   end
 
+  describe "GET /admin/users/:id" do
+    it "returns the user for an admin" do
+      admin = create(:user, :admin, password: password, password_confirmation: password)
+      other_user = create(:user)
+      sign_in(admin, password: password)
+
+      get "/admin/users/#{other_user.id}", as: :json
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body).to include(
+        "id" => other_user.id,
+        "email" => other_user.email,
+        "first_name" => other_user.first_name,
+        "last_name" => other_user.last_name,
+        "admin" => false
+      )
+    end
+
+    it "returns forbidden for a signed-in non-admin" do
+      user = create(:user, password: password, password_confirmation: password)
+      other_user = create(:user)
+      sign_in(user, password: password)
+
+      get "/admin/users/#{other_user.id}", as: :json
+
+      expect(response).to have_http_status(:forbidden)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body["error"]).to eq("Forbidden")
+    end
+
+    it "returns unauthorized when not signed in (before admin authorization)" do
+      other_user = create(:user)
+
+      get "/admin/users/#{other_user.id}", as: :json
+
+      expect(response).to have_http_status(:unauthorized)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body["error"]).to eq("Unauthorized")
+    end
+
+    it "returns not found for a missing user" do
+      admin = create(:user, :admin, password: password, password_confirmation: password)
+      sign_in(admin, password: password)
+
+      get "/admin/users/0", as: :json
+
+      expect(response).to have_http_status(:not_found)
+      expect(response.media_type).to eq("application/json")
+      expect(response.parsed_body["error"]).to eq("Not Found")
+    end
+  end
+
   describe "Admin::BaseController" do
     it "cannot skip authentication" do
       expect {

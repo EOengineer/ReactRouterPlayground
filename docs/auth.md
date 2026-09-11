@@ -19,6 +19,7 @@ CORS allows the SPA origin (`CORS_ORIGINS`, default `http://localhost:5173`) wit
 | `DELETE` | `/session` | yes | `204` + clear cookie | `401` `{ error: "Unauthorized" }` |
 | `GET` | `/me` | yes | `200` + user JSON | `401` `{ error: "Unauthorized" }` |
 | `GET` | `/admin/users` | yes (admin) | `200` + user JSON array | `401` / `403` `{ error: "Unauthorized" \| "Forbidden" }` |
+| `GET` | `/admin/users/:id` | yes (admin) | `200` + user JSON | `401` / `403` / `404` `{ error: "Unauthorized" \| "Forbidden" \| "Not Found" }` |
 
 ### User JSON
 
