@@ -3,12 +3,12 @@
 require "rails_helper"
 
 RSpec.describe "Admin users", type: :request do
-  let(:password) { "password1234!" }
-
   describe "GET /admin/users" do
+    let(:request_path) { "/admin/users" }
+
     it "defaults to the JSON format without an extension or Accept header" do
-      admin = create(:user, :admin, password: password, password_confirmation: password)
-      sign_in(admin, password: password)
+      admin = create(:user, :admin)
+      sign_in(admin)
 
       get "/admin/users"
 
@@ -18,9 +18,9 @@ RSpec.describe "Admin users", type: :request do
     end
 
     it "returns all users for an admin" do
-      admin = create(:user, :admin, password: password, password_confirmation: password)
+      admin = create(:user, :admin)
       other_user = create(:user)
-      sign_in(admin, password: password)
+      sign_in(admin)
 
       get "/admin/users", as: :json
 
@@ -32,77 +32,42 @@ RSpec.describe "Admin users", type: :request do
       )
     end
 
-    it "returns forbidden for a signed-in non-admin" do
-      user = create(:user, password: password, password_confirmation: password)
-      sign_in(user, password: password)
-
-      get "/admin/users", as: :json
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.media_type).to eq("application/json")
-      expect(response.parsed_body["error"]).to eq("Forbidden")
-    end
-
-    it "returns unauthorized when not signed in (before admin authorization)" do
-      get "/admin/users", as: :json
-
-      expect(response).to have_http_status(:unauthorized)
-      expect(response.media_type).to eq("application/json")
-      expect(response.parsed_body["error"]).to eq("Unauthorized")
-    end
+    it_behaves_like "requires authentication"
+    it_behaves_like "requires admin"
   end
 
   describe "GET /admin/users/:id" do
-    it "returns the user for an admin" do
-      admin = create(:user, :admin, password: password, password_confirmation: password)
-      other_user = create(:user)
-      sign_in(admin, password: password)
+    let!(:target_user) { create(:user) }
+    let(:request_path) { "/admin/users/#{target_user.id}" }
 
-      get "/admin/users/#{other_user.id}", as: :json
+    it "returns the user for an admin" do
+      admin = create(:user, :admin)
+      sign_in(admin)
+
+      get "/admin/users/#{target_user.id}", as: :json
 
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("application/json")
       expect(response.parsed_body).to include(
-        "id" => other_user.id,
-        "email" => other_user.email,
-        "first_name" => other_user.first_name,
-        "last_name" => other_user.last_name,
+        "id" => target_user.id,
+        "email" => target_user.email,
+        "first_name" => target_user.first_name,
+        "last_name" => target_user.last_name,
         "admin" => false
       )
     end
 
-    it "returns forbidden for a signed-in non-admin" do
-      user = create(:user, password: password, password_confirmation: password)
-      other_user = create(:user)
-      sign_in(user, password: password)
-
-      get "/admin/users/#{other_user.id}", as: :json
-
-      expect(response).to have_http_status(:forbidden)
-      expect(response.media_type).to eq("application/json")
-      expect(response.parsed_body["error"]).to eq("Forbidden")
-    end
-
-    it "returns unauthorized when not signed in (before admin authorization)" do
-      other_user = create(:user)
-
-      get "/admin/users/#{other_user.id}", as: :json
-
-      expect(response).to have_http_status(:unauthorized)
-      expect(response.media_type).to eq("application/json")
-      expect(response.parsed_body["error"]).to eq("Unauthorized")
-    end
-
     it "returns not found for a missing user" do
-      admin = create(:user, :admin, password: password, password_confirmation: password)
-      sign_in(admin, password: password)
+      admin = create(:user, :admin)
+      sign_in(admin)
 
       get "/admin/users/0", as: :json
 
-      expect(response).to have_http_status(:not_found)
-      expect(response.media_type).to eq("application/json")
-      expect(response.parsed_body["error"]).to eq("Not Found")
+      expect_json_error(:not_found, "Not Found")
     end
+
+    it_behaves_like "requires authentication"
+    it_behaves_like "requires admin"
   end
 
   describe "Admin::BaseController" do
