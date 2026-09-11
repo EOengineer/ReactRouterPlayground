@@ -3,21 +3,20 @@
 require "rails_helper"
 
 RSpec.describe "Me", type: :request do
-  let(:password) { "password1234!" }
   let!(:user) do
     create(
       :user,
       :admin,
       first_name: "Eric",
-      last_name: "Oligney",
-      password: password,
-      password_confirmation: password
+      last_name: "Oligney"
     )
   end
 
   describe "GET /me" do
+    let(:request_path) { "/me" }
+
     it "defaults to the JSON format without an extension or Accept header" do
-      sign_in(user, password: password)
+      sign_in(user)
 
       get "/me"
 
@@ -27,7 +26,7 @@ RSpec.describe "Me", type: :request do
     end
 
     it "returns the current user when authenticated" do
-      sign_in(user, password: password)
+      sign_in(user)
 
       get "/me", as: :json
 
@@ -42,12 +41,6 @@ RSpec.describe "Me", type: :request do
       )
     end
 
-    it "returns unauthorized when not signed in" do
-      get "/me", as: :json
-
-      expect(response).to have_http_status(:unauthorized)
-      expect(response.media_type).to eq("application/json")
-      expect(response.parsed_body["error"]).to eq("Unauthorized")
-    end
+    it_behaves_like "requires authentication"
   end
 end
