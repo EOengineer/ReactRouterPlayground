@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import Admin from "./admin";
+import Admin from "./_index";
 
 describe("Admin", () => {
   it("renders the Admin heading", () => {

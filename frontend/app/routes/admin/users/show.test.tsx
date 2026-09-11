@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { User } from "~/types/user";
 
-import AdminUserShow, { clientLoader } from "./admin.users.show";
+import AdminUserShow, { clientLoader } from "./show";
 
 const sampleUser: User = {
   id: 42,
