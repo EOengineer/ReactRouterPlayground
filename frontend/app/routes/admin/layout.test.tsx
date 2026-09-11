@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "~/types/api";
 import type { User } from "~/types/user";
 
-import AdminLayout, { clientLoader } from "./admin-layout";
+import AdminLayout, { clientLoader } from "./layout";
 
 const adminUser: User = {
   id: 1,

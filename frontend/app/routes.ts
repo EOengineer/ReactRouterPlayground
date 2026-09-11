@@ -6,10 +6,10 @@ export default [
     route("login", "routes/login.tsx"),
     route("register", "routes/register.tsx"),
   ]),
-  layout("routes/admin-layout.tsx", [
-    route("admin", "routes/admin.tsx"),
-    route("admin/users", "routes/admin.users.tsx"),
-    route("admin/users/:id", "routes/admin.users.show.tsx"),
-    route("admin/sessions", "routes/admin.sessions.tsx"),
+  layout("routes/admin/layout.tsx", [
+    route("admin", "routes/admin/_index.tsx"),
+    route("admin/users", "routes/admin/users/index.tsx"),
+    route("admin/users/:id", "routes/admin/users/show.tsx"),
+    route("admin/sessions", "routes/admin/sessions/index.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { User } from "~/types/user";
 
-import AdminUsers, { clientLoader } from "./admin.users";
+import AdminUsers, { clientLoader } from "./index";
 
 const users: User[] = [
   {
