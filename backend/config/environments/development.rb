@@ -3,11 +3,17 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # LAB_MODE (set by compose.lab.yml) makes development behave closer to
+  # production so load test numbers are meaningful.
+  lab_mode = ENV["LAB_MODE"].present?
+
   # Make code changes take effect immediately without server restart.
-  config.enable_reloading = true
+  config.enable_reloading = !lab_mode
 
   # Do not eager load code on boot.
-  config.eager_load = false
+  config.eager_load = lab_mode
+
+  config.log_level = lab_mode ? :info : :debug
 
   # Show full error reports.
   config.consider_all_requests_local = true
@@ -41,9 +47,11 @@ Rails.application.configure do
   config.active_record.migration_error = :page_load
 
   # Highlight code that triggered database queries in logs.
-  config.active_record.verbose_query_logs = true
+  config.active_record.verbose_query_logs = !lab_mode
 
   # Append comments with runtime information tags to SQL queries in logs.
+  # In lab mode these comments also show up in pg_stat_activity, so you can
+  # tell which controller action a running query came from.
   config.active_record.query_log_tags_enabled = true
 
   # Highlight code that enqueued background job in logs.

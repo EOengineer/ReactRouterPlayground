@@ -1,0 +1,138 @@
+#!/usr/bin/env bash
+# Scaling lab helper. See docs/scaling-labs.md.
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+DC=(docker compose -f compose.yml -f compose.lab.yml)
+API_URL="http://localhost:${LAB_API_PORT:-3000}"
+PSQL=(psql -U reactrouterplayground -d reactrouterplayground_development -P pager=off)
+
+usage() {
+  cat <<'EOF'
+Usage: bin/lab <command> [args]
+
+Stack
+  up                     Build and start db, redis, api, sidekiq, slowvendor, pgbouncer in lab mode
+  restart                Recreate api + sidekiq so new env knobs take effect
+                         e.g. RAILS_MAX_THREADS=10 DB_POOL=3 bin/lab restart
+  down                   Stop the lab stack
+  seed                   Load ~10k users / ~1M posts (idempotent)
+  logs [service]         Tail logs (default: api)
+
+Load
+  k6 <script> [args]     Run loadtest/<script>.js, e.g. bin/lab k6 slow_query -e RATE=40
+
+Observe
+  puma                   Puma stats: backlog, busy threads, pool capacity
+  sql <name>             Run loadtest/sql/<name>.sql (top_queries, activity, locks, reset_stats, explain_user_posts)
+  watch                  Refresh Puma stats + DB activity every 2s
+  psql                   Interactive psql against the dev database
+
+Scenarios
+  index add|drop         Add/drop the posts(user_id, created_at) index CONCURRENTLY (Lab 2)
+  incident start|reveal|stop   Blind triage drill (Lab 1)
+  rails <args>           bin/rails inside the api container
+EOF
+}
+
+wait_for_api() {
+  for _ in $(seq 120); do
+    curl -fs "$API_URL/up" >/dev/null 2>&1 && return 0
+    sleep 1
+  done
+  echo "api did not come up; check: bin/lab logs api" >&2
+  exit 1
+}
+
+# Requests that k6 already gave up on are still queued in Puma; starting the next
+# run before they drain pollutes its numbers.
+wait_for_idle() {
+  for _ in $(seq 120); do
+    busy=$(curl -fs "http://localhost:9293/stats?token=lab" | ruby -rjson -e '
+      s = JSON.parse(STDIN.read)
+      ws = s["worker_status"] ? s["worker_status"].map { |w| w["last_status"] } : [s]
+      puts ws.sum { |w| w["busy_threads"].to_i + w["backlog"].to_i }' 2>/dev/null || echo 0)
+    [ "${busy:-0}" -eq 0 ] && return 0
+    echo "waiting for Puma to drain ($busy busy/queued)..."
+    sleep 2
+  done
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  up)
+    "${DC[@]}" up -d --build db redis api sidekiq slowvendor pgbouncer
+    echo "Waiting for api on $API_URL..."
+    wait_for_api
+    "${DC[@]}" exec -T db "${PSQL[@]}" -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;" >/dev/null
+    echo "Lab is up. Next: bin/lab seed"
+    ;;
+  restart)
+    "${DC[@]}" up -d --force-recreate --no-deps api sidekiq
+    wait_for_api
+    echo "api restarted: RAILS_MAX_THREADS=${RAILS_MAX_THREADS:-3} WEB_CONCURRENCY=${WEB_CONCURRENCY:-0} DB_POOL=${DB_POOL:-<threads>} API_CPUS=${API_CPUS:-2}"
+    ;;
+  down)
+    "${DC[@]}" --profile loadtest down
+    ;;
+  seed)
+    "${DC[@]}" exec api bin/rails lab:seed
+    ;;
+  logs)
+    "${DC[@]}" logs -f --tail=50 "${1:-api}"
+    ;;
+  k6)
+    script="${1:?script name required, e.g. slow_query}"
+    shift
+    wait_for_idle
+    "${DC[@]}" run --rm k6 run "$@" "/scripts/${script}.js"
+    ;;
+  puma)
+    curl -fs "http://localhost:9293/stats?token=lab" | ruby -rjson -e '
+      s = JSON.parse(STDIN.read)
+      workers = s["worker_status"] ? s["worker_status"].map { |w| w["last_status"] } : [s]
+      workers.each_with_index do |w, i|
+        puts format("worker %d  threads=%d  busy=%d  backlog=%d  pool_capacity=%d  requests=%d",
+                    i, w["max_threads"].to_i, w["busy_threads"].to_i, w["backlog"].to_i,
+                    w["pool_capacity"].to_i, w["requests_count"].to_i)
+      end'
+    ;;
+  sql)
+    name="${1:?sql name required, e.g. top_queries}"
+    "${DC[@]}" exec -T db "${PSQL[@]}" < "loadtest/sql/${name}.sql"
+    ;;
+  watch)
+    while true; do
+      clear
+      date
+      echo "== Puma =="
+      "$0" puma || echo "(puma stats unavailable)"
+      echo
+      echo "== Postgres =="
+      "$0" sql activity
+      sleep 2
+    done
+    ;;
+  psql)
+    "${DC[@]}" exec db "${PSQL[@]}"
+    ;;
+  index)
+    "${DC[@]}" exec api bin/rails "lab:index:${1:?add or drop}"
+    ;;
+  incident)
+    "${DC[@]}" exec api bin/rails "lab:incident:${1:?start, reveal, or stop}"
+    ;;
+  rails)
+    "${DC[@]}" exec api bin/rails "$@"
+    ;;
+  help|-h|--help)
+    usage
+    ;;
+  *)
+    usage
+    exit 1
+    ;;
+esac

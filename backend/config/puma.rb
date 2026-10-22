@@ -34,6 +34,10 @@ port ENV.fetch("PORT", 3000)
 # Allow puma to be restarted by `bin/rails restart` command.
 plugin :tmp_restart
 
+# Exposes backlog / busy thread stats at http://localhost:9293/stats?token=...
+control_token = ENV.fetch("PUMA_CONTROL_TOKEN", "")
+activate_control_app "tcp://0.0.0.0:9293", auth_token: control_token unless control_token.empty?
+
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]

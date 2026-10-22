@@ -1,0 +1,7 @@
+---
+:concurrency: <%= ENV.fetch("SIDEKIQ_CONCURRENCY", 5) %>
+# Strict priority: a worker only pulls from `default` when `critical` is empty.
+:queues:
+  - critical
+  - default
+  - low

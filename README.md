@@ -51,6 +51,17 @@ docker compose up --build
 
 Cookie sessions between the SPA and Rails API (`POST /session`, `GET /me`, etc.). See **[docs/auth.md](docs/auth.md)** for endpoints, the SPA login flow, and seed credentials.
 
+## Scaling lab
+
+Load-test the app at "traffic doubled" and diagnose deliberately broken scenarios (missing index, N+1, pool exhaustion, GVL, slow vendor, cache stampede, Sidekiq backlog, lock contention).
+
+```bash
+bin/lab up && bin/lab seed
+bin/lab k6 slow_query
+```
+
+See **[docs/scaling-playbook.md](docs/scaling-playbook.md)** (framework) and **[docs/scaling-labs.md](docs/scaling-labs.md)** (labs + measured results).
+
 ## Backend (Rails)
 
 Includes **Active Storage** (local disk in development), Redis cache, and Sidekiq.

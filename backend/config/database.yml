@@ -1,7 +1,9 @@
 default: &default
   adapter: postgresql
   encoding: unicode
-  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  max_connections: <%= ENV["DB_POOL"].presence || ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  checkout_timeout: <%= ENV.fetch("DB_CHECKOUT_TIMEOUT") { 5 } %>
+  application_name: <%= ENV.fetch("PG_APPLICATION_NAME") { "rails" } %>
 
 development:
   <<: *default

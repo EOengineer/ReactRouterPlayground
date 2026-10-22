@@ -14,6 +14,16 @@ Rails.application.routes.draw do
     end
   end
 
+  # Scaling lab (docs/scaling-labs.md)
+  unless Rails.env.production?
+    namespace :lab, defaults: { format: :json } do
+      scope controller: :scenarios do
+        %i[slow_query feed db_work cpu vendor stats queues incident].each { |action| get action }
+        %i[enqueue like].each { |action| post action }
+      end
+    end
+  end
+
   # Sidekiq dashboard (dev only; API-only apps need session middleware for auth in prod)
   if Rails.env.development?
     mount Sidekiq::Web => "/sidekiq"

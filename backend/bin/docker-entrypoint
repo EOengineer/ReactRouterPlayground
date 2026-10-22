@@ -7,7 +7,8 @@ fi
 # Wait for Postgres
 if [ -n "${DATABASE_URL:-}" ]; then
   echo "Waiting for PostgreSQL..."
-  until pg_isready -d "${DATABASE_URL}" >/dev/null 2>&1; do
+  # libpq rejects Rails-only URL params like ?prepared_statements=false
+  until pg_isready -d "${DATABASE_URL%%\?*}" >/dev/null 2>&1; do
     sleep 1
   done
   echo "PostgreSQL is ready."
